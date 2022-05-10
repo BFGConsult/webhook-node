@@ -52,7 +52,11 @@ app.post("/hook", verifyPostData, function (req, res) {
 //  return;
 
   process.chdir(repoPath)
-  execute("git pull")
+  cmd="git pull"
+  if (!execute(cmd)) {
+    res.status(500).end() // Responding is important
+    return;
+  }
   res.status(200).end() // Responding is important
 })
 
@@ -60,14 +64,15 @@ function execute(cmd) {
   exec(cmd, (error, stdout, stderr) => {
     if (error) {
         console.log(`error: ${error.message}`);
-        return;
+        return false;
     }
     if (stderr) {
         console.log(`stderr: ${stderr}`);
-        return;
+        return true;
     }
     console.log(`stdout: ${stdout}`);
   });
+  return true;
 }
 
 function verifyPostData(req, res, next) {
