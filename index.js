@@ -13,7 +13,7 @@ require('console-stamp')(console, '[HH:MM:ss.l]');
 let rawdata = fs.readFileSync('config.json');
 let config = JSON.parse(rawdata);
 
-const internal_map = config.repo_to_path_map
+const internal_map = config.repoMap
 const PORT = config.port
 const secret = config.secret
 
@@ -39,13 +39,25 @@ app.post("/hook", verifyPostData, function (req, res) {
     res.status(403).end()
     return
   }
-  dest=internal_map[reponame]
+  repoconfig=internal_map[reponame]
+  if (typeof repoconfig === 'string' ) {
+    dest=repoconfig
+  }
+  else {
+    dest=repoconfig['repoPath']
+  }
+  console.log(typeof repoconfig)
   console.log(`${reponame} => ${dest}`)
   res.status(200).end() // Responding is important
 //  return;
 
   process.chdir(dest)
-  exec("git pull", (error, stdout, stderr) => {
+  execute("git pull")
+  res.status(200).end() // Responding is important
+})
+
+function execute(cmd) {
+  exec(cmd, (error, stdout, stderr) => {
     if (error) {
         console.log(`error: ${error.message}`);
         return;
@@ -56,9 +68,7 @@ app.post("/hook", verifyPostData, function (req, res) {
     }
     console.log(`stdout: ${stdout}`);
   });
-
-  res.status(200).end() // Responding is important
-})
+}
 
 function verifyPostData(req, res, next) {
   if (!req.rawBody) {
