@@ -1,0 +1,7 @@
+{
+ "port" : 3000,
+ "repo_to_path_map": {
+   "BFGConsult/webhook-node" : "/PATH/TO/REPO/"
+ },
+ "secret": "0000000000000000000000000000000000000000"
+}
