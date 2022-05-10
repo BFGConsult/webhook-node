@@ -39,20 +39,21 @@ app.post("/hook", verifyPostData, function (req, res) {
     res.status(403).end()
     return
   }
-  repoconfig=internal_map[reponame]
-  if (typeof repoconfig === 'string' ) {
-    repoPath=repoconfig
+  repoConfig=internal_map[reponame]
+  cmd=""
+  if (typeof repoConfig === 'string' ) {
+    repoPath=repoConfig
   }
   else {
-    repoPath=repoconfig['repoPath']
+    repoPath=repoConfig['repoPath']
+    cmd = repoPath['cmd'] || "git pull";
   }
-  console.log(typeof repoconfig)
+  console.log(typeof repoConfig)
   console.log(`${reponame} => ${repoPath}`)
   res.status(200).end() // Responding is important
 //  return;
 
   process.chdir(repoPath)
-  cmd="git pull"
   if (!execute(cmd)) {
     res.status(500).end() // Responding is important
     return;
