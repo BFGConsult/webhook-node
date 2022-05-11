@@ -2,13 +2,17 @@
 const crypto = require('crypto')
 const express = require("express")
 const bodyParser = require("body-parser")
-// Initialize express and define a port
-const app = express()
 const { exec } = require("child_process");
-const fs = require('fs');
 
 // add timestamps in front of log messages
 require('console-stamp')(console, '[HH:MM:ss.l]');
+
+// Initialize express and define a port
+const app = express()
+const fs = require('fs');
+
+const sigHeaderName = 'X-Hub-Signature-256'
+const sigHashAlg = 'sha256'
 
 let rawdata = fs.readFileSync('config.json');
 let config = JSON.parse(rawdata);
@@ -17,10 +21,6 @@ const internal_map = config.repoMap
 const PORT = config.port
 const secret = config.secret
 
-const sigHeaderName = 'X-Hub-Signature-256'
-const sigHashAlg = 'sha256'
-
-//app.use(bodyParser.json())
 // Start express on the defined port
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`))
 
@@ -48,10 +48,7 @@ app.post("/hook", verifyPostData, function (req, res) {
     repoPath=repoConfig['repoPath']
     cmd = repoPath['cmd'] || "git pull";
   }
-  console.log(typeof repoConfig)
   console.log(`${reponame} => ${repoPath}`)
-  res.status(200).end() // Responding is important
-//  return;
 
   process.chdir(repoPath)
   if (!execute(cmd)) {
@@ -90,4 +87,3 @@ function verifyPostData(req, res, next) {
 
   return next()
 }
-
