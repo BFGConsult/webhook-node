@@ -13,6 +13,7 @@ const fs = require('fs');
 
 const sigHeaderName = 'X-Hub-Signature-256'
 const sigHashAlg = 'sha256'
+const cmdDefault = 'git pull'
 
 let rawdata = fs.readFileSync('config.json');
 let config = JSON.parse(rawdata);
@@ -43,19 +44,21 @@ app.post("/hook", verifyPostData, function (req, res) {
   cmd=""
   if (typeof repoConfig === 'string' ) {
     repoPath=repoConfig
+    cmd=cmdDefault
   }
   else {
     repoPath=repoConfig['repoPath']
-    cmd = repoPath['cmd'] || "git pull";
+    cmd = repoConfig['cmd'] || cmdDefault;
   }
-  console.log(`${reponame} => ${repoPath}`)
+  console.log(reponame + " => " + JSON.stringify(repoConfig))
+  console.log("CMD:" + cmd)
 
   process.chdir(repoPath)
   if (!execute(cmd)) {
-    res.status(500).end() // Responding is important
+    res.status(500).end()
     return;
   }
-  res.status(200).end() // Responding is important
+  res.status(200).end()
 })
 
 function execute(cmd) {
