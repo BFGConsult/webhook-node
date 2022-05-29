@@ -16,14 +16,14 @@ const transport = ("logFile" in config) ?
       new transports.File({filename: config.logFile, level:'info'}) :
       new transports.Console()
 
-const myWinstonOptions = {
+const winstonOptions = {
     format: format.combine(
         format.timestamp(),
         format.json()
     ),
     transports: [transport]
 }
-const logger = new createLogger(myWinstonOptions)
+const logger = new createLogger(winstonOptions)
 
 const sigHeaderName = 'X-Hub-Signature-256'
 const sigHashAlg = 'sha256'
