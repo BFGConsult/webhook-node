@@ -3,27 +3,38 @@ const crypto = require('crypto')
 const express = require("express")
 const bodyParser = require("body-parser")
 const { exec } = require("child_process");
-
-// add timestamps in front of log messages
-require('console-stamp')(console, '[HH:MM:ss.l]');
+const {transports, createLogger, format} = require('winston')
 
 // Initialize express and define a port
 const app = express()
 const fs = require('fs');
 
+let rawdata = fs.readFileSync('config.json');
+let config = JSON.parse(rawdata);
+
+const transport = ("logFile" in config) ?
+  new transports.File({filename: config.logFile, level:'info'}) :
+  new transports.Console()
+
+const myWinstonOptions = {
+    format: format.combine(
+            format.timestamp(),
+            format.json()
+        ),
+    transports: [transport]
+}
+const logger = new createLogger(myWinstonOptions)
+
 const sigHeaderName = 'X-Hub-Signature-256'
 const sigHashAlg = 'sha256'
 const cmdDefault = 'git pull'
-
-let rawdata = fs.readFileSync('config.json');
-let config = JSON.parse(rawdata);
 
 const internal_map = config.repoMap
 const PORT = config.port
 const secret = config.secret
 
 // Start express on the defined port
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`))
+app.listen(PORT, () => logger.info(`🚀 Server running on port ${PORT}`))
 
 app.use(bodyParser.json({
   verify: (req, res, buf, encoding) => {
@@ -50,8 +61,8 @@ app.post("/hook", verifyPostData, function (req, res) {
     repoPath=repoConfig['repoPath']
     cmd = repoConfig['cmd'] || cmdDefault;
   }
-  console.log(reponame + " => " + JSON.stringify(repoConfig))
-  console.log("CMD:" + cmd)
+  logger.info(reponame + " => " + JSON.stringify(repoConfig))
+  logger.info("CMD:" + cmd)
 
   process.chdir(repoPath)
   if (!execute(cmd)) {
@@ -64,14 +75,14 @@ app.post("/hook", verifyPostData, function (req, res) {
 function execute(cmd) {
   exec(cmd, (error, stdout, stderr) => {
     if (error) {
-        console.log(`error: ${error.message}`);
+        logger.error(`error: ${error.message}`);
         return false;
     }
     if (stderr) {
-        console.log(`stderr: ${stderr}`);
+        logger.error(`stderr: ${stderr}`);
         return true;
     }
-    console.log(`stdout: ${stdout}`);
+    logger.info(`stdout: ${stdout}`);
   });
   return true;
 }
